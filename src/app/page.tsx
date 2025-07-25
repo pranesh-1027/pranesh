@@ -9,7 +9,7 @@ import {
   Atom, BrainCircuit, Cog, Dna, FlaskConical, Globe, Loader2, Rocket, Sigma, TerminalSquare, BookOpen, Lightbulb, Image as ImageIcon, X,
 } from 'lucide-react';
 
-import { generateEducationalVisual, GenerateEducationalVisualInput } from '@/ai/flows/generate-educational-visual';
+import { generateEducationalVisual, GenerateEducationalVisualInput, GenerateEducationalVisualOutput } from '@/ai/flows/generate-educational-visual';
 import { explainVisualConcept, ExplainVisualConceptInput } from '@/ai/flows/explain-visual-concept';
 
 import { Button } from '@/components/ui/button';
@@ -54,11 +54,13 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-type HistoryItem = (GenerateEducationalVisualInput & { image: string, type: 'visual' }) | (ExplainVisualConceptInput & { explanation: string, type: 'explanation' });
+type HistoryItem = (GenerateEducationalVisualOutput & GenerateEducationalVisualInput & { type: 'visual' }) | (ExplainVisualConceptInput & { explanation: string, type: 'explanation' });
+
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedContent, setGeneratedContent] = useState<string | null>(null);
+  const [generatedDescription, setGeneratedDescription] = useState<string | null>(null);
   const [contentType, setContentType] = useState<'visual' | 'explanation' | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const { toast } = useToast();
@@ -97,6 +99,7 @@ export default function Home() {
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
     setGeneratedContent(null);
+    setGeneratedDescription(null);
     setContentType(null);
 
     try {
@@ -118,9 +121,10 @@ export default function Home() {
         }
         const result = await generateEducationalVisual({prompt: values.prompt, domain: values.domain});
         setGeneratedContent(result.image);
+        setGeneratedDescription(result.description);
 
         if (result.image && !result.image.startsWith('❌')) {
-          setHistory(prev => [{ prompt: values.prompt!, domain: values.domain, image: result.image, type: 'visual' }, ...prev.slice(0, 49)]);
+          setHistory(prev => [{ prompt: values.prompt!, domain: values.domain, image: result.image, description: result.description, type: 'visual' }, ...prev.slice(0, 49)]);
         }
       }
     } catch (error) {
@@ -142,6 +146,7 @@ export default function Home() {
       form.setValue('domain', item.domain);
       removeImage();
       setGeneratedContent(item.image);
+      setGeneratedDescription(item.description);
       setContentType('visual');
     } else {
       form.setValue('prompt', '');
@@ -149,6 +154,7 @@ export default function Home() {
       setImagePreview(item.photoDataUri);
       form.setValue('image', item.photoDataUri);
       setGeneratedContent(item.explanation);
+      setGeneratedDescription(null);
       setContentType('explanation');
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -334,14 +340,17 @@ export default function Home() {
                       <p className="font-semibold">{generatedContent}</p>
                     </div>
                   ) : contentType === 'visual' ? (
-                    <Image
-                      src={generatedContent}
-                      alt={form.getValues('prompt') || 'Generated visual'}
-                      width={512}
-                      height={512}
-                      className="object-contain w-full h-full rounded-md"
-                      data-ai-hint="educational visual"
-                    />
+                    <div className="flex flex-col gap-4 items-center text-center">
+                        <Image
+                            src={generatedContent}
+                            alt={form.getValues('prompt') || 'Generated visual'}
+                            width={512}
+                            height={512}
+                            className="object-contain w-full h-full max-h-[calc(100%-4rem)] rounded-md"
+                            data-ai-hint="educational visual"
+                        />
+                        {generatedDescription && <p className="text-sm text-muted-foreground">{generatedDescription}</p>}
+                    </div>
                   ) : (
                      <ScrollArea className="h-full w-full p-4">
                        <p className="whitespace-pre-wrap">{generatedContent}</p>

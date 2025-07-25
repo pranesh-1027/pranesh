@@ -28,6 +28,7 @@ export type GenerateEducationalVisualInput = z.infer<typeof GenerateEducationalV
 
 const GenerateEducationalVisualOutputSchema = z.object({
   image: z.string().describe('The generated image as a data URI.'),
+  description: z.string().describe('A two-line description of the generated visual.'),
 });
 export type GenerateEducationalVisualOutput = z.infer<typeof GenerateEducationalVisualOutputSchema>;
 
@@ -85,25 +86,27 @@ const generateEducationalVisualFlow = ai.defineFlow(
       const imagePrompt = llmResponse.text;
 
       if (imagePrompt.includes("I don't do that.")) {
-        return { image: `❌ ${imagePrompt}` };
+        return { image: `❌ ${imagePrompt}`, description: '' };
       }
 
-      const {media} = await ai.generate({
+      const {text: description, media} = await ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: imagePrompt,
+        prompt: `Generate an image based on the following prompt and also provide a 2-line description for the visual.
+        
+Prompt: ${imagePrompt}`,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
         },
       });
 
       if (!media || !media.url) {
-        return {image: '❌ "I don\'t do that. I only create educational and scientific visuals." '};
+        return {image: '❌ "I don\'t do that. I only create educational and scientific visuals." ', description: ''};
       }
 
-      return {image: media.url};
+      return {image: media.url, description: description ?? ''};
     } catch (e: any) {
       console.error('Error generating image:', e);
-      return {image: '❌ "I don\'t do that. I only create educational and scientific visuals." '};
+      return {image: '❌ "I don\'t do that. I only create educational and scientific visuals." ', description: ''};
     }
   }
 );
