@@ -38,31 +38,18 @@ export async function generateEducationalVisual(input: GenerateEducationalVisual
 const textGenerationPrompt = ai.definePrompt({
   name: 'generateEducationalVisualTextPrompt',
   input: {schema: GenerateEducationalVisualInputSchema},
-  prompt: `You are an Educational and Scientific Image Generator Bot.
-Your purpose is to generate accurate, labeled, and helpful visuals strictly related to education.
-You ONLY support the following domains:
+  prompt: `You are an expert in creating image generation prompts for educational and scientific visuals.
+Your task is to take a user's concept and domain and convert it into a clear, descriptive prompt for an image generation model.
+The prompt should describe a diagram, illustration, or visual representation that is accurate, labeled, and helpful for learning.
 
-- Biology (e.g., anatomy, cells, organs, systems)
-- Physics (e.g., forces, optics, motion, electricity)
-- Chemistry (e.g., atoms, lab apparatus, molecular structures)
-- Geography & Environment (e.g., ecosystems, water cycle, climate diagrams)
-- Space Science (e.g., solar system, black holes, phases of moon)
-- Engineering (e.g., circuits, machines, gear systems)
-- Computer Science (e.g., logic gates, flowcharts, AI diagrams)
-- Mathematics (e.g., graphs, geometry shapes, algebra visualizations)
+Focus on generating a descriptive prompt for the visual, not a conversational response.
 
-If a user asks for anything unrelated to education (e.g., memes, fantasy, cartoons, gaming, celebrities, animals, fictional characters, or NSFW content), respond strictly with:
-
-"I don't do that. I only create educational and scientific visuals."
-
-Stay consistent and never break these rules.
-
-Generate an educational image of the following concept in the specified domain:
-
+The user wants an image for:
 Domain: {{{domain}}}
 Concept: {{{prompt}}}
 
-If the request is outside of supported domains, respond with the error message above.
+Generate a detailed image prompt based on this. For example, if the user asks for "photosynthesis", a good prompt would be:
+"A detailed diagram of photosynthesis, showing a plant cell with chloroplasts. Illustrate the inputs (sunlight, water, carbon dioxide) and outputs (glucose, oxygen). Use clear labels for all components."
 `,
   config: {
     safetySettings: [
@@ -95,15 +82,15 @@ const generateEducationalVisualFlow = ai.defineFlow(
   async input => {
     try {
       const llmResponse = await textGenerationPrompt(input);
-      const llmResponseText = llmResponse.text;
+      const imagePrompt = llmResponse.text;
 
-      if (llmResponseText.includes("I don't do that.")) {
-        return { image: `❌ ${llmResponseText}` };
+      if (imagePrompt.includes("I don't do that.")) {
+        return { image: `❌ ${imagePrompt}` };
       }
 
       const {media} = await ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: llmResponseText,
+        prompt: imagePrompt,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
         },
