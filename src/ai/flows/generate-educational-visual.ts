@@ -35,8 +35,8 @@ export async function generateEducationalVisual(input: GenerateEducationalVisual
   return generateEducationalVisualFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'generateEducationalVisualPrompt',
+const textGenerationPrompt = ai.definePrompt({
+  name: 'generateEducationalVisualTextPrompt',
   input: {schema: GenerateEducationalVisualInputSchema},
   prompt: `You are an Educational and Scientific Image Generator Bot.
 Your purpose is to generate accurate, labeled, and helpful visuals strictly related to education.
@@ -94,7 +94,7 @@ const generateEducationalVisualFlow = ai.defineFlow(
   },
   async input => {
     try {
-      const llmResponse = await prompt(input);
+      const llmResponse = await textGenerationPrompt(input);
       const llmResponseText = llmResponse.text;
 
       if (llmResponseText.includes("I don't do that.")) {
