@@ -80,13 +80,13 @@ const generateEducationalVisualFlow = ai.defineFlow(
     inputSchema: GenerateEducationalVisualInputSchema,
     outputSchema: GenerateEducationalVisualOutputSchema,
   },
-  async input => {
+  async (input) => {
     try {
       const llmResponse = await textGenerationPrompt(input);
       const imagePrompt = llmResponse.text;
 
       if (imagePrompt.includes("I don't do that.")) {
-        return { image: `❌ ${imagePrompt}`, description: '' };
+        return {image: `❌ ${imagePrompt}`, description: ''};
       }
 
       const {text: description, media} = await ai.generate({
