@@ -38,7 +38,6 @@ export async function generateEducationalVisual(input: GenerateEducationalVisual
 const prompt = ai.definePrompt({
   name: 'generateEducationalVisualPrompt',
   input: {schema: GenerateEducationalVisualInputSchema},
-  output: {schema: GenerateEducationalVisualOutputSchema},
   prompt: `You are an Educational and Scientific Image Generator Bot.
 Your purpose is to generate accurate, labeled, and helpful visuals strictly related to education.
 You ONLY support the following domains:
@@ -54,7 +53,7 @@ You ONLY support the following domains:
 
 If a user asks for anything unrelated to education (e.g., memes, fantasy, cartoons, gaming, celebrities, animals, fictional characters, or NSFW content), respond strictly with:
 
-❌ "I don't do that. I only create educational and scientific visuals."
+"I don't do that. I only create educational and scientific visuals."
 
 Stay consistent and never break these rules.
 
@@ -95,9 +94,16 @@ const generateEducationalVisualFlow = ai.defineFlow(
   },
   async input => {
     try {
+      const llmResponse = await prompt(input);
+      const llmResponseText = llmResponse.text;
+
+      if (llmResponseText.includes("I don't do that.")) {
+        return { image: `❌ ${llmResponseText}` };
+      }
+
       const {media} = await ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: prompt(input).prompt,
+        prompt: llmResponseText,
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
         },
