@@ -91,9 +91,10 @@ const generateEducationalVisualFlow = ai.defineFlow(
 
       const {text: description, media} = await ai.generate({
         model: 'googleai/gemini-2.0-flash-preview-image-generation',
-        prompt: `Generate an image based on the following prompt and also provide a 2-line description for the visual.
-        
-Prompt: ${imagePrompt}`,
+        prompt: [
+          {text: `Generate an image based on the following prompt and also provide a 2-line description for the visual.`},
+          {text: `Prompt: ${imagePrompt}`}
+        ],
         config: {
           responseModalities: ['TEXT', 'IMAGE'],
         },
